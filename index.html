@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111827" />
+  <title>Mystery Case</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --bg-soft: #111827;
+      --panel: rgba(18, 26, 46, 0.96);
+      --panel-2: rgba(27, 38, 63, 0.96);
+      --line: rgba(255, 255, 255, 0.12);
+      --text: #f7f3e8;
+      --muted: #b9c2d4;
+      --gold: #eabf67;
+      --gold-2: #f4d58d;
+      --blue: #7aa2f7;
+      --green: #67d7a2;
+      --red: #ef7a85;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(68, 88, 139, 0.24), transparent 35%),
+        radial-gradient(circle at 90% 0%, rgba(135, 91, 50, 0.20), transparent 32%),
+        linear-gradient(150deg, #070b16 0%, #0f172a 52%, #111827 100%);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button, input { font: inherit; }
+    button { -webkit-tap-highlight-color: transparent; }
+
+    .app {
+      min-height: 100vh;
+      width: min(1500px, 100%);
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .screen { display: none; min-height: calc(100vh - 36px); }
+    .screen.active { display: flex; }
+
+    .center-screen {
+      align-items: center;
+      justify-content: center;
+    }
+
+    .glass {
+      background: linear-gradient(160deg, rgba(24, 35, 58, 0.96), rgba(12, 18, 33, 0.96));
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      border-radius: 24px;
+    }
+
+    .home-card {
+      width: min(760px, 100%);
+      padding: clamp(34px, 7vw, 72px);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .home-card::before {
+      content: "";
+      position: absolute;
+      width: 330px;
+      height: 330px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(234, 191, 103, 0.16), transparent 68%);
+      top: -150px;
+      right: -100px;
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      color: var(--gold);
+      letter-spacing: 0.24em;
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    .game-title {
+      margin-bottom: 12px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(3rem, 9vw, 6.2rem);
+      line-height: 0.95;
+      letter-spacing: 0.035em;
+      text-shadow: 0 5px 28px rgba(0, 0, 0, 0.42);
+    }
+
+    .tagline {
+      color: var(--muted);
+      font-size: clamp(1rem, 2.2vw, 1.35rem);
+      margin-bottom: 34px;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn {
+      border: 1px solid transparent;
+      border-radius: 13px;
+      min-height: 48px;
+      padding: 12px 20px;
+      color: var(--text);
+      background: #273450;
+      cursor: pointer;
+      font-weight: 800;
+      letter-spacing: 0.015em;
+      transition: transform 150ms ease, filter 150ms ease, border-color 150ms ease, background 150ms ease;
+    }
+
+    .btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
+    .btn:active { transform: translateY(0); }
+    .btn:focus-visible { outline: 3px solid rgba(122, 162, 247, 0.46); outline-offset: 3px; }
+    .btn:disabled { cursor: not-allowed; opacity: 0.42; transform: none; filter: none; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #d7aa4d, #f0ce7a);
+      color: #21170a;
+      box-shadow: 0 11px 28px rgba(234, 191, 103, 0.18);
+    }
+
+    .btn-secondary { background: #26344f; border-color: rgba(255,255,255,0.08); }
+    .btn-ghost { background: transparent; border-color: var(--line); color: var(--muted); }
+    .btn-danger { background: rgba(153, 49, 63, 0.45); border-color: rgba(239, 122, 133, 0.35); }
+    .btn-success { background: linear-gradient(135deg, #398f68, #69d6a3); color: #071b12; }
+    .btn-small { min-height: 40px; padding: 9px 14px; font-size: 0.92rem; }
+
+    .page-shell {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .top-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 16px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(12, 18, 33, 0.86);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand-mini {
+      color: var(--gold-2);
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+
+    .page-title-wrap { text-align: center; flex: 1; }
+    .page-title-wrap h2 { margin: 0; font-size: clamp(1.25rem, 3vw, 2rem); }
+    .page-title-wrap p { margin: 3px 0 0; color: var(--muted); font-size: 0.92rem; }
+
+    .form-card {
+      width: min(700px, 100%);
+      margin: auto;
+      padding: clamp(24px, 5vw, 46px);
+    }
+
+    .form-card h2 { font-size: clamp(2rem, 5vw, 3rem); margin-bottom: 8px; }
+    .form-card > p { color: var(--muted); margin-bottom: 28px; }
+
+    .field { margin-bottom: 18px; }
+    .field label { display: block; margin-bottom: 8px; color: var(--gold-2); font-weight: 800; }
+
+    .field input {
+      width: 100%;
+      min-height: 54px;
+      border-radius: 13px;
+      border: 1px solid var(--line);
+      background: rgba(4, 9, 20, 0.68);
+      color: var(--text);
+      padding: 12px 15px;
+      font-size: 1.08rem;
+    }
+
+    .field input:focus { outline: 3px solid rgba(122, 162, 247, 0.24); border-color: var(--blue); }
+
+    .case-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin: auto 0;
+    }
+
+    .case-card {
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: linear-gradient(160deg, rgba(24, 35, 58, 0.96), rgba(10, 16, 30, 0.98));
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .case-card-image {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      background: #030712;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .case-card-content { padding: 19px; display: flex; flex-direction: column; flex: 1; }
+    .case-number { color: var(--gold); font-size: 0.82rem; font-weight: 900; letter-spacing: 0.18em; }
+    .case-card h3 { font-size: clamp(1.25rem, 2vw, 1.65rem); margin: 8px 0; }
+    .case-card p { color: var(--muted); line-height: 1.55; flex: 1; }
+    .case-status { min-height: 25px; margin-bottom: 12px; color: var(--green); font-weight: 900; }
+
+    .intro-layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(340px, 0.7fr);
+      gap: 18px;
+      min-height: 0;
+    }
+
+    .intro-image-wrap, .intro-copy {
+      min-height: 0;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(11, 17, 31, 0.94);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .intro-image-wrap { display: grid; place-items: center; }
+    .intro-image-wrap img { width: 100%; height: 100%; max-height: 76vh; object-fit: contain; background: #050914; }
+    .intro-copy { padding: clamp(24px, 4vw, 48px); display: flex; flex-direction: column; justify-content: center; }
+    .intro-copy h2 { font-family: Georgia, "Times New Roman", serif; font-size: clamp(2.1rem, 4vw, 4rem); margin-bottom: 18px; }
+    .intro-copy p { color: #d8deea; font-size: clamp(1rem, 1.8vw, 1.25rem); line-height: 1.7; }
+    .intro-instruction { padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--line); color: var(--gold-2) !important; font-weight: 800; }
+
+    .investigation-shell {
+      height: calc(100vh - 36px);
+      width: 100%;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 12px;
+      min-height: 640px;
+    }
+
+    .investigation-header {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: rgba(9, 15, 28, 0.92);
+    }
+
+    .investigation-header .left { color: var(--gold-2); font-family: Georgia, "Times New Roman", serif; font-weight: 900; letter-spacing: 0.08em; }
+    .investigation-header .center { text-align: center; }
+    .investigation-header .center strong { display: block; font-size: clamp(1rem, 2.3vw, 1.55rem); }
+    .investigation-header .center span { color: var(--muted); font-size: 0.85rem; }
+    .investigation-header .right { display: flex; justify-content: flex-end; }
+
+    .case-stage {
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      background: #030712;
+      box-shadow: var(--shadow);
+    }
+
+    .case-stage img {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      object-fit: contain;
+      object-position: center;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .control-strip {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      background: rgba(12, 19, 35, 0.96);
+      box-shadow: 0 18px 46px rgba(0,0,0,0.28);
+    }
+
+    .player-card, .turn-card {
+      min-width: 0;
+      padding: 14px 18px;
+      text-align: center;
+      position: relative;
+    }
+
+    .player-card + .turn-card, .turn-card + .player-card { border-left: 1px solid var(--line); }
+
+    .player-card.active-player {
+      background: linear-gradient(180deg, rgba(122, 162, 247, 0.17), rgba(122, 162, 247, 0.04));
+      box-shadow: inset 0 0 0 2px rgba(122, 162, 247, 0.42);
+    }
+
+    .turn-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 24px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(122, 162, 247, 0.18);
+      color: #cfe0ff;
+      font-size: 0.75rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      visibility: hidden;
+    }
+
+    .active-player .turn-chip { visibility: visible; }
+
+    .player-label, .turn-label {
+      color: var(--gold);
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      font-weight: 900;
+      margin-top: 6px;
+    }
+
+    .player-name {
+      margin: 4px 0 5px;
+      font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+      font-weight: 900;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .points-label { color: var(--muted); font-size: 0.76rem; font-weight: 800; }
+    .points-value { font-size: clamp(2rem, 4.2vw, 3rem); line-height: 1; margin: 4px 0 8px; font-weight: 950; }
+
+    .point-controls { display: flex; justify-content: center; gap: 10px; }
+    .point-btn {
+      width: 48px;
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      color: var(--text);
+      background: #293854;
+      cursor: pointer;
+      font-size: 1.45rem;
+      font-weight: 900;
+    }
+    .point-btn.minus { background: rgba(115, 45, 56, 0.48); }
+    .point-btn:hover { filter: brightness(1.12); }
+
+    .turn-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+    .current-player-name { font-size: clamp(1.15rem, 2vw, 1.55rem); font-weight: 950; }
+    .turn-actions { display: flex; gap: 9px; justify-content: center; flex-wrap: wrap; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 16, 0.80);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      width: min(720px, 100%);
+      max-height: calc(100vh - 36px);
+      overflow: auto;
+      padding: clamp(22px, 4vw, 38px);
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: linear-gradient(160deg, #18243c, #0c1324);
+      box-shadow: 0 30px 90px rgba(0,0,0,0.6);
+    }
+
+    .modal.large { width: min(980px, 100%); }
+    .modal h2 { font-size: clamp(1.7rem, 4vw, 2.6rem); margin-bottom: 10px; }
+    .modal h3 { color: var(--gold-2); margin: 24px 0 10px; }
+    .modal p, .modal li { color: #d8deea; line-height: 1.65; }
+    .modal-close-row { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+
+    .rules-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin: 20px 0;
+    }
+
+    .rule-card { padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,0.035); }
+    .rule-card strong { display: block; color: var(--gold-2); margin-bottom: 5px; }
+
+    .guess-prompts {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .guess-prompt {
+      padding: 18px 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.04);
+      text-align: center;
+      font-weight: 900;
+      color: var(--gold-2);
+    }
+
+    .privacy-note {
+      border-left: 4px solid var(--gold);
+      background: rgba(234, 191, 103, 0.08);
+      padding: 12px 14px;
+      border-radius: 10px;
+      color: #f3e3ba;
+      margin: 16px 0;
+    }
+
+    .keyword-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .keyword-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.035);
+      cursor: pointer;
+    }
+
+    .keyword-option input { width: 20px; height: 20px; margin-top: 1px; accent-color: var(--green); }
+    .keyword-option strong { display: block; }
+    .keyword-option small { color: var(--muted); display: block; margin-top: 3px; line-height: 1.4; }
+
+    .keyword-counter {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 13px 15px;
+      border-radius: 12px;
+      background: rgba(5, 10, 22, 0.58);
+      margin: 14px 0;
+      font-weight: 900;
+    }
+
+    .teacher-section {
+      border-top: 1px solid var(--line);
+      padding-top: 20px;
+      margin-top: 20px;
+    }
+
+    .secret-box {
+      border: 1px solid rgba(234, 191, 103, 0.27);
+      background: rgba(234, 191, 103, 0.06);
+      border-radius: 14px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+
+    .secret-box p:last-child { margin-bottom: 0; }
+    .secret-list { margin: 8px 0 0; padding-left: 20px; }
+    .teacher-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+
+    .solution-layout {
+      width: min(1100px, 100%);
+      margin: auto;
+      padding: clamp(24px, 5vw, 48px);
+    }
+
+    .solution-banner {
+      text-align: center;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 24px;
+      margin-bottom: 26px;
+    }
+
+    .solution-banner h2 { font-size: clamp(2.2rem, 7vw, 4.6rem); margin-bottom: 8px; color: var(--green); }
+    .winner-line { font-size: clamp(1.1rem, 2.4vw, 1.5rem); color: var(--gold-2); font-weight: 900; }
+    .solution-story { font-size: 1.08rem; line-height: 1.75; color: #dfe5ef; }
+
+    .solution-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin: 22px 0;
+    }
+
+    .solution-box { border: 1px solid var(--line); background: rgba(255,255,255,0.035); border-radius: 14px; padding: 16px; }
+    .solution-box h3 { color: var(--gold-2); margin-bottom: 10px; }
+    .solution-box ul { margin: 0; padding-left: 20px; color: #d7deea; line-height: 1.65; }
+
+    .score-board {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin: 20px 0;
+    }
+
+    .score-card { text-align: center; border: 1px solid var(--line); background: rgba(255,255,255,0.035); border-radius: 14px; padding: 16px; }
+    .score-card strong { display: block; font-size: 1.35rem; }
+    .score-card span { display: block; color: var(--gold-2); font-size: 2rem; font-weight: 950; margin-top: 4px; }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translate(-50%, 20px);
+      padding: 12px 18px;
+      border-radius: 999px;
+      background: rgba(11, 18, 34, 0.96);
+      color: var(--text);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease, transform 180ms ease;
+      z-index: 200;
+      font-weight: 800;
+    }
+
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (max-width: 950px) {
+      .case-grid { grid-template-columns: 1fr; }
+      .case-card { display: grid; grid-template-columns: minmax(220px, 0.8fr) 1.2fr; }
+      .case-card-image { height: 100%; aspect-ratio: auto; }
+      .intro-layout { grid-template-columns: 1fr; }
+      .intro-image-wrap img { max-height: 48vh; }
+      .solution-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 760px) {
+      .app { padding: 10px; }
+      .screen { min-height: calc(100vh - 20px); }
+      .investigation-shell { height: auto; min-height: calc(100vh - 20px); grid-template-rows: auto minmax(330px, 62vh) auto; }
+      .investigation-header { grid-template-columns: 1fr auto; }
+      .investigation-header .left { display: none; }
+      .investigation-header .center { text-align: left; }
+      .control-strip { grid-template-columns: 1fr 1fr; }
+      .turn-card { grid-column: 1 / -1; grid-row: 2; border-left: 0 !important; border-top: 1px solid var(--line); }
+      .player-card:nth-child(3) { border-left: 1px solid var(--line); }
+      .rules-grid, .keyword-grid, .guess-prompts, .score-board { grid-template-columns: 1fr; }
+      .case-card { display: flex; }
+      .case-card-image { aspect-ratio: 16 / 9; }
+      .top-nav { align-items: flex-start; }
+      .brand-mini { display: none; }
+      .page-title-wrap { text-align: left; }
+    }
+
+    @media (max-height: 740px) and (min-width: 761px) {
+      .investigation-shell { min-height: 560px; }
+      .player-card, .turn-card { padding-top: 9px; padding-bottom: 9px; }
+      .points-value { font-size: 2rem; margin-bottom: 5px; }
+      .point-btn { height: 36px; }
+      .turn-chip { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app" id="app">
+    <section class="screen center-screen active" id="home-screen">
+      <div class="home-card glass">
+        <div class="eyebrow">Speaking Investigation Game</div>
+        <h1 class="game-title">MYSTERY<br />CASE</h1>
+        <p class="tagline">Ask Questions. Find Clues. Solve the Case.</p>
+        <div class="button-row">
+          <button class="btn btn-primary" id="start-btn">Start Game</button>
+          <button class="btn btn-secondary" id="continue-btn" hidden>Continue Game</button>
+          <button class="btn btn-ghost" data-open-modal="rules-modal">How to Play</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen center-screen" id="setup-screen">
+      <div class="form-card glass">
+        <div class="eyebrow">Player Setup</div>
+        <h2>Enter player names</h2>
+        <p>Two students will take turns asking questions aloud.</p>
+        <form id="player-form">
+          <div class="field">
+            <label for="player1-input">Player 1</label>
+            <input id="player1-input" maxlength="24" autocomplete="off" placeholder="e.g. An" required />
+          </div>
+          <div class="field">
+            <label for="player2-input">Player 2</label>
+            <input id="player2-input" maxlength="24" autocomplete="off" placeholder="e.g. Minh" required />
+          </div>
+          <div class="button-row" style="justify-content:flex-start; margin-top:24px;">
+            <button class="btn btn-primary" type="submit">Continue</button>
+            <button class="btn btn-ghost" type="button" data-go-home>Back</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="screen" id="selection-screen">
+      <div class="page-shell">
+        <header class="top-nav">
+          <div class="brand-mini">MYSTERY CASE</div>
+          <div class="page-title-wrap">
+            <h2>Select a Case</h2>
+            <p>Choose any investigation to begin.</p>
+          </div>
+          <button class="btn btn-ghost btn-small" data-go-home>Home</button>
+        </header>
+        <div class="case-grid" id="case-grid"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="intro-screen">
+      <div class="page-shell">
+        <header class="top-nav">
+          <div class="brand-mini">MYSTERY CASE</div>
+          <div class="page-title-wrap">
+            <h2 id="intro-case-label">Case 1</h2>
+            <p>Background known to the students</p>
+          </div>
+          <button class="btn btn-ghost btn-small" data-show-selection>Cases</button>
+        </header>
+        <div class="intro-layout">
+          <div class="intro-image-wrap">
+            <img id="intro-image" alt="Mystery case scene" />
+          </div>
+          <article class="intro-copy">
+            <div class="eyebrow" id="intro-case-number">Case 1</div>
+            <h2 id="intro-title"></h2>
+            <p id="intro-background"></p>
+            <p class="intro-instruction">Look carefully at the scene. Ask Yes/No questions to discover what really happened.</p>
+            <div class="button-row" style="justify-content:flex-start; margin-top:20px;">
+              <button class="btn btn-primary" id="begin-investigation-btn">Begin Investigation</button>
+              <button class="btn btn-ghost" data-show-selection>Choose Another Case</button>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="investigation-screen">
+      <div class="investigation-shell">
+        <header class="investigation-header">
+          <div class="left">MYSTERY CASE</div>
+          <div class="center">
+            <strong id="investigation-title"></strong>
+            <span id="investigation-case-count"></span>
+          </div>
+          <div class="right">
+            <button class="btn btn-ghost btn-small" id="teacher-btn">Teacher</button>
+          </div>
+        </header>
+
+        <div class="case-stage">
+          <img id="case-image" alt="Mystery case scene" />
+        </div>
+
+        <div class="control-strip">
+          <section class="player-card" id="player1-card">
+            <div class="turn-chip">● YOUR TURN</div>
+            <div class="player-label">PLAYER 1</div>
+            <div class="player-name" id="player1-name-display"></div>
+            <div class="points-label">CLUE POINTS</div>
+            <div class="points-value" id="player1-points">0</div>
+            <div class="point-controls">
+              <button class="point-btn minus" data-point-player="1" data-point-change="-1" aria-label="Remove one point from Player 1">−</button>
+              <button class="point-btn" data-point-player="1" data-point-change="1" aria-label="Add one point to Player 1">+</button>
+            </div>
+          </section>
+
+          <section class="turn-card">
+            <div class="turn-label">CURRENT TURN</div>
+            <div class="current-player-name" id="current-player-display"></div>
+            <div class="turn-actions">
+              <button class="btn btn-secondary btn-small" id="switch-turn-btn">Switch Turn</button>
+              <button class="btn btn-primary btn-small" id="make-guess-btn">Make a Guess</button>
+            </div>
+          </section>
+
+          <section class="player-card" id="player2-card">
+            <div class="turn-chip">● YOUR TURN</div>
+            <div class="player-label">PLAYER 2</div>
+            <div class="player-name" id="player2-name-display"></div>
+            <div class="points-label">CLUE POINTS</div>
+            <div class="points-value" id="player2-points">0</div>
+            <div class="point-controls">
+              <button class="point-btn minus" data-point-player="2" data-point-change="-1" aria-label="Remove one point from Player 2">−</button>
+              <button class="point-btn" data-point-player="2" data-point-change="1" aria-label="Add one point to Player 2">+</button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen center-screen" id="solution-screen">
+      <article class="solution-layout glass">
+        <div class="solution-banner">
+          <div class="eyebrow" id="solution-case-label"></div>
+          <h2>CASE SOLVED!</h2>
+          <div class="winner-line" id="winner-line"></div>
+        </div>
+        <h3>The Truth</h3>
+        <p class="solution-story" id="solution-story"></p>
+        <div class="solution-grid">
+          <div class="solution-box">
+            <h3>Secret Keywords</h3>
+            <ul id="solution-keywords"></ul>
+          </div>
+          <div class="solution-box">
+            <h3>True Clues</h3>
+            <ul id="solution-true-clues"></ul>
+          </div>
+          <div class="solution-box">
+            <h3>Red Herrings</h3>
+            <ul id="solution-red-herrings"></ul>
+          </div>
+        </div>
+        <div class="score-board">
+          <div class="score-card"><strong id="solution-player1-name"></strong><span id="solution-player1-score"></span>Clue Points</div>
+          <div class="score-card"><strong id="solution-player2-name"></strong><span id="solution-player2-score"></span>Clue Points</div>
+        </div>
+        <div class="button-row">
+          <button class="btn btn-primary" id="next-case-btn">Next Case</button>
+          <button class="btn btn-secondary" id="play-again-btn">Play This Case Again</button>
+          <button class="btn btn-ghost" data-show-selection>Case Selection</button>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="rules-modal" role="dialog" aria-modal="true" aria-labelledby="rules-title">
+    <div class="modal">
+      <div class="modal-close-row"><button class="btn btn-ghost btn-small" data-close-modal>Close</button></div>
+      <h2 id="rules-title">How to Play</h2>
+      <div class="rules-grid">
+        <div class="rule-card"><strong>1. Ask aloud</strong>Players take turns asking one complete Yes/No question in English.</div>
+        <div class="rule-card"><strong>2. Host answers</strong>The teacher responds only with Yes, No, Maybe, or Irrelevant.</div>
+        <div class="rule-card"><strong>3. Earn clue points</strong>If a question clearly relates to a secret keyword, the teacher adds one point.</div>
+        <div class="rule-card"><strong>4. Solve the case</strong>On a turn, a player may explain who did it, why, and how.</div>
+      </div>
+      <p>A player solves the case by explaining the crime correctly and including at least six of the eight secret keywords. One spoken question can earn a maximum of one clue point.</p>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="guess-modal" role="dialog" aria-modal="true" aria-labelledby="guess-title">
+    <div class="modal">
+      <div class="modal-close-row"><button class="btn btn-ghost btn-small" data-close-modal>Close</button></div>
+      <div class="eyebrow">Final Theory</div>
+      <h2 id="guess-title"></h2>
+      <p>Ask the player to explain the full theory aloud:</p>
+      <div class="guess-prompts">
+        <div class="guess-prompt">Who did it?</div>
+        <div class="guess-prompt">Why?</div>
+        <div class="guess-prompt">How?</div>
+      </div>
+      <div class="button-row">
+        <button class="btn btn-primary" id="open-keyword-check-btn">Teacher Keyword Check</button>
+        <button class="btn btn-danger" id="guess-incorrect-btn">Incorrect — Switch Turn</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="pin-modal" role="dialog" aria-modal="true" aria-labelledby="pin-title">
+    <div class="modal" style="width:min(480px,100%);">
+      <div class="modal-close-row"><button class="btn btn-ghost btn-small" data-close-modal>Close</button></div>
+      <h2 id="pin-title">Teacher Access</h2>
+      <p>Enter the 6-digit teacher PIN.</p>
+      <div class="field">
+        <label for="pin-input">Teacher PIN</label>
+        <input id="pin-input" inputmode="numeric" maxlength="6" type="password" placeholder="••••••" />
+      </div>
+      <div class="button-row" style="justify-content:flex-start;">
+        <button class="btn btn-primary" id="unlock-teacher-btn">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="teacher-modal" role="dialog" aria-modal="true" aria-labelledby="teacher-title">
+    <div class="modal large">
+      <div class="modal-close-row"><button class="btn btn-ghost btn-small" data-close-modal>Close</button></div>
+      <div class="eyebrow">Private Teacher Information</div>
+      <h2 id="teacher-title"></h2>
+      <div class="privacy-note">This section reveals the solution. Pause screen sharing or ask students to look away before opening it.</div>
+      <div class="teacher-section" style="border-top:0; padding-top:0; margin-top:0;">
+        <div class="secret-box">
+          <p><strong>Victim:</strong> <span id="teacher-victim"></span></p>
+          <p><strong>Suspect:</strong> <span id="teacher-suspect"></span></p>
+          <p><strong>Motive:</strong> <span id="teacher-motive"></span></p>
+          <p><strong>Method:</strong> <span id="teacher-method"></span></p>
+        </div>
+      </div>
+      <div class="teacher-section">
+        <h3>Secret Keywords and Acceptable Synonyms</h3>
+        <div class="keyword-grid" id="teacher-keywords"></div>
+      </div>
+      <div class="teacher-section">
+        <h3>Complete Answer</h3>
+        <p id="teacher-complete-answer"></p>
+      </div>
+      <div class="teacher-section">
+        <h3>Teacher Controls</h3>
+        <div class="teacher-actions">
+          <button class="btn btn-secondary btn-small" id="teacher-set-p1-turn">Set Player 1 Turn</button>
+          <button class="btn btn-secondary btn-small" id="teacher-set-p2-turn">Set Player 2 Turn</button>
+          <button class="btn btn-secondary btn-small" id="teacher-reset-points">Reset Case Points</button>
+          <button class="btn btn-danger btn-small" id="teacher-restart-case">Restart Case</button>
+          <button class="btn btn-danger btn-small" id="teacher-reveal-solution">Reveal Solution</button>
+          <button class="btn btn-ghost btn-small" id="teacher-case-selection">Case Selection</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="keyword-modal" role="dialog" aria-modal="true" aria-labelledby="keyword-title">
+    <div class="modal large">
+      <div class="modal-close-row"><button class="btn btn-ghost btn-small" data-close-modal>Close</button></div>
+      <div class="eyebrow">Teacher Keyword Check</div>
+      <h2 id="keyword-title"></h2>
+      <div class="privacy-note">Students should not see this checklist. Select only the ideas the player clearly included in the spoken explanation.</div>
+      <div class="keyword-grid" id="keyword-check-grid"></div>
+      <label class="keyword-option" style="margin-top:12px;">
+        <input type="checkbox" id="theory-correct-checkbox" />
+        <span><strong>Who + Why + How are connected correctly</strong><small>The player has explained the killer, motive, and method as a coherent theory.</small></span>
+      </label>
+      <div class="keyword-counter">
+        <span>Correct keywords</span>
+        <span id="keyword-count">0 / 8</span>
+      </div>
+      <div class="button-row">
+        <button class="btn btn-success" id="case-solved-btn" disabled>Case Solved</button>
+        <button class="btn btn-danger" id="keyword-incorrect-btn">Incorrect — Switch Turn</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div class="modal" style="width:min(520px,100%);">
+      <h2 id="confirm-title">Confirm action</h2>
+      <p id="confirm-message"></p>
+      <div class="button-row" style="justify-content:flex-start;">
+        <button class="btn btn-danger" id="confirm-yes-btn">Confirm</button>
+        <button class="btn btn-ghost" data-close-modal>Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" aria-live="polite"></div>
+
+  <script>
+    "use strict";
+
+    // Change this value to set a different 6-digit teacher PIN.
+    const TEACHER_PIN = "009988";
+    const STORAGE_KEY = "mysteryCaseGame_v1";
+
+    const CASES = [
+      {
+        id: 1,
+        title: "The Poisoned Stamp",
+        image: "assets/case-1-poisoned-stamp.png",
+        fallbackImage: "https://drive.google.com/thumbnail?id=1OVJ0uYmJg23XwiRSuxkQ9iD8pKf3VD0s&sz=w2400",
+        cardSummary: "A businessman dies at his desk while preparing a letter.",
+        publicBackground: "A man was found dead at his desk in his home office at night. There were no wounds and no signs of a fight. The door was closed, and no one else was in the room. On the desk were a cup of coffee, a medicine bottle, a letter, an envelope and a stamp. A framed photo of the man and his wife was hanging on the wall. A shirt with a lipstick kiss mark was also hanging near the door.",
+        victim: "A married businessman who was writing a letter shortly before he died. The coffee was almost untouched, and the medicine was harmless.",
+        suspect: "The victim’s wife.",
+        motive: "She was jealous and angry after discovering a lipstick mark from another woman and suspecting an affair.",
+        method: "She secretly put poison on the back of a postage stamp. The victim licked the stamp while preparing the letter, allowing the poison to enter his mouth.",
+        completeAnswer: "The victim’s wife found another woman’s lipstick mark on his shirt. Because she was jealous, she put poison on a postage stamp. The man licked the stamp while writing a letter, and the poison killed him.",
+        keywords: [
+          { word: "wife", synonyms: ["spouse", "married woman", "his wife"] },
+          { word: "jealousy", synonyms: ["jealous", "envy", "envious"] },
+          { word: "lipstick mark", synonyms: ["kiss mark", "lipstick stain"] },
+          { word: "affair", synonyms: ["cheating", "another woman", "unfaithful"] },
+          { word: "poison", synonyms: ["toxic substance", "deadly chemical"] },
+          { word: "stamp", synonyms: ["postage stamp"] },
+          { word: "lick", synonyms: ["use his tongue", "put his tongue on"] },
+          { word: "letter", synonyms: ["mail", "envelope"] }
+        ],
+        minimumKeywords: 6,
+        trueClues: ["Postage stamp", "Letter and envelope", "Lipstick mark", "Photo of the husband and wife"],
+        redHerrings: ["Coffee", "Medicine bottle", "Water bottle", "Closed room"]
+      },
+      {
+        id: 2,
+        title: "The Broken Balcony Rail",
+        image: "assets/case-2-broken-balcony.png",
+        fallbackImage: "https://drive.google.com/thumbnail?id=1eBGZS73JOzF9e_8xU2HUz2_eH-uSX_kq&sz=w2400",
+        cardSummary: "A hotel owner falls from a damaged third-floor balcony.",
+        publicBackground: "Mr. Henry, the owner of a small hotel, was found dead on the grass below a third-floor balcony. The police first believed that he had accidentally fallen while standing outside for some fresh air. Part of the metal railing was broken and hanging down. Two small screws were lying near the damaged area. On the balcony, there were a table, a chair, a phone and a folder of documents. A hotel employee ID card was found near a bush below.",
+        victim: "Henry was around 60 years old and owned the hotel. He often went to the balcony after dinner and leaned against the railing. Before his death, he discovered missing money from hotel bookings and planned to fire the person responsible.",
+        suspect: "Clara, the hotel manager.",
+        motive: "Clara wanted to hide the money she had stolen and prevent Henry from firing her.",
+        method: "Earlier that day, Clara loosened the screws holding the balcony railing. When Henry later leaned against it, the railing came loose and he fell. Clara had already left, making the death look accidental.",
+        completeAnswer: "Clara, the hotel manager, had been stealing money from hotel bookings. When Henry discovered this and planned to fire her, she loosened the screws on the balcony railing. Later, Henry leaned against the railing, it broke loose, and he fell to his death. Clara left the hotel before it happened to make the murder look like an accident.",
+        keywords: [
+          { word: "Clara", synonyms: ["the manager", "the female manager"] },
+          { word: "hotel manager", synonyms: ["manager", "hotel employee"] },
+          { word: "stolen money", synonyms: ["theft", "stealing money", "missing money"] },
+          { word: "fired", synonyms: ["dismissed", "lose her job", "get fired"] },
+          { word: "screws", synonyms: ["bolts", "metal screws"] },
+          { word: "railing", synonyms: ["balcony rail", "metal barrier"] },
+          { word: "balcony", synonyms: ["third-floor balcony", "hotel balcony"] },
+          { word: "fall", synonyms: ["fell", "dropped", "fell from the balcony"] }
+        ],
+        minimumKeywords: 6,
+        trueClues: ["Loose screws", "Broken railing", "Hotel booking documents", "Employee ID card", "Third-floor balcony"],
+        redHerrings: ["Phone", "Chair", "Notebook", "Open balcony door"]
+      },
+      {
+        id: 3,
+        title: "The Empty Inhaler",
+        image: "assets/case-3-empty-inhaler.jpg",
+        fallbackImage: "https://drive.google.com/thumbnail?id=1b5Bo4jAwtj0AObHL5hTmsld7E_OS5Ch1&sz=w2400",
+        cardSummary: "A leading actress collapses after the final rehearsal.",
+        publicBackground: "Lily, a stage actress, was found unconscious in her dressing room after the final rehearsal. She had no visible injuries, but her asthma inhaler was lying beside her. The dressing room door was unlocked. Some stage smoke was still in the air, and Lily’s costume and script were nearby. At first, everyone believed that she had simply suffered a sudden asthma attack. She was taken to hospital but later died after being unable to breathe for too long.",
+        victim: "Lily was the leading actress. She had asthma and always carried an emergency inhaler. She had recently discovered that another actress was secretly sabotaging performers and planned to report it.",
+        suspect: "Grace, a supporting actress.",
+        motive: "Grace wanted to stop Lily from exposing her sabotage and hoped to take Lily’s leading role.",
+        method: "Grace replaced Lily’s real emergency inhaler with an identical empty one. Stage smoke triggered Lily’s asthma, but the inhaler contained no medicine, so she could not breathe.",
+        completeAnswer: "Grace, the supporting actress, had been sabotaging other performers to get the leading role. When Lily discovered the truth and planned to tell the director, Grace replaced Lily’s real asthma inhaler with an empty one. The stage smoke triggered Lily’s asthma, but the inhaler contained no medicine. Lily could not breathe and later died.",
+        keywords: [
+          { word: "Grace", synonyms: ["the supporting actress", "the other actress"] },
+          { word: "supporting actress", synonyms: ["minor actress", "secondary actress"] },
+          { word: "sabotage", synonyms: ["secretly harm", "cause problems", "ruin performances"] },
+          { word: "leading role", synonyms: ["main role", "lead role", "star role"] },
+          { word: "asthma", synonyms: ["breathing condition", "breathing problem"] },
+          { word: "stage smoke", synonyms: ["theatre smoke", "artificial smoke", "smoke effect"] },
+          { word: "empty inhaler", synonyms: ["fake inhaler", "inhaler without medicine", "useless inhaler"] },
+          { word: "replace", synonyms: ["switch", "exchange", "swap"] }
+        ],
+        minimumKeywords: 6,
+        trueClues: ["Empty inhaler", "Stage smoke", "Cast list", "Leading actress costume", "Final rehearsal script"],
+        redHerrings: ["Water bottle", "Tissues", "Flowers", "Makeup", "Unlocked door"]
+      }
+    ];
+
+    const defaultState = () => ({
+      players: {
+        1: { name: "Player 1", totalPoints: 0 },
+        2: { name: "Player 2", totalPoints: 0 }
+      },
+      casePoints: {
+        1: { 1: 0, 2: 0 },
+        2: { 1: 0, 2: 0 },
+        3: { 1: 0, 2: 0 }
+      },
+      currentPlayer: 1,
+      currentCaseId: 1,
+      solvedCases: {},
+      currentScreen: "home-screen"
+    });
+
+    let state = defaultState();
+    let teacherUnlocked = false;
+    let pendingTeacherAction = null;
+    let confirmAction = null;
+
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => [...document.querySelectorAll(selector)];
+    const currentCase = () => CASES.find(c => c.id === state.currentCaseId) || CASES[0];
+
+    function saveState() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (error) { console.warn("Could not save game state", error); }
+      updateContinueButton();
+    }
+
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (saved && saved.players && saved.casePoints) state = { ...defaultState(), ...saved };
+      } catch (error) {
+        console.warn("Could not load game state", error);
+        state = defaultState();
+      }
+    }
+
+    function clearState() {
+      localStorage.removeItem(STORAGE_KEY);
+      state = defaultState();
+      teacherUnlocked = false;
+      updateContinueButton();
+    }
+
+    function showScreen(id, save = true) {
+      $$(".screen").forEach(screen => screen.classList.toggle("active", screen.id === id));
+      state.currentScreen = id;
+      if (save) saveState();
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) modal.classList.add("open");
+    }
+
+    function closeModal(modalOrId) {
+      const modal = typeof modalOrId === "string" ? document.getElementById(modalOrId) : modalOrId;
+      if (modal) modal.classList.remove("open");
+    }
+
+    function closeAllModals() { $$(".modal-backdrop").forEach(m => m.classList.remove("open")); }
+
+    function toast(message) {
+      const el = $("#toast");
+      el.textContent = message;
+      el.classList.add("show");
+      clearTimeout(toast.timeout);
+      toast.timeout = setTimeout(() => el.classList.remove("show"), 1500);
+    }
+
+    function setImage(img, caseData) {
+      img.onerror = () => {
+        if (img.dataset.fallbackUsed === "true") return;
+        img.dataset.fallbackUsed = "true";
+        img.src = caseData.fallbackImage;
+      };
+      img.dataset.fallbackUsed = "false";
+      img.src = caseData.image;
+      img.alt = `${caseData.title} case image`;
+    }
+
+    function updateContinueButton() {
+      const hasSave = Boolean(localStorage.getItem(STORAGE_KEY));
+      $("#continue-btn").hidden = !hasSave;
+    }
+
+    function renderCaseSelection() {
+      const grid = $("#case-grid");
+      grid.innerHTML = CASES.map(caseData => {
+        const solved = state.solvedCases[caseData.id];
+        const status = solved ? `✓ Solved by ${escapeHtml(state.players[solved.winner]?.name || "a player")}` : "";
+        return `
+          <article class="case-card">
+            <img class="case-card-image" src="${caseData.image}" data-fallback="${caseData.fallbackImage}" alt="${escapeHtml(caseData.title)}" />
+            <div class="case-card-content">
+              <div class="case-number">CASE ${caseData.id}</div>
+              <h3>${escapeHtml(caseData.title)}</h3>
+              <p>${escapeHtml(caseData.cardSummary)}</p>
+              <div class="case-status">${status}</div>
+              <button class="btn btn-primary" data-select-case="${caseData.id}">${solved ? "Play Again" : "Play Case"}</button>
+            </div>
+          </article>`;
+      }).join("");
+
+      $$(".case-card-image").forEach(img => {
+        img.onerror = () => {
+          if (img.dataset.usedFallback === "true") return;
+          img.dataset.usedFallback = "true";
+          img.src = img.dataset.fallback;
+        };
+      });
+    }
+
+    function renderIntro() {
+      const c = currentCase();
+      $("#intro-case-label").textContent = `Case ${c.id}`;
+      $("#intro-case-number").textContent = `Case ${c.id}`;
+      $("#intro-title").textContent = c.title;
+      $("#intro-background").textContent = c.publicBackground;
+      setImage($("#intro-image"), c);
+    }
+
+    function renderInvestigation() {
+      const c = currentCase();
+      $("#investigation-title").textContent = c.title;
+      $("#investigation-case-count").textContent = `CASE ${c.id} OF ${CASES.length}`;
+      setImage($("#case-image"), c);
+
+      $("#player1-name-display").textContent = state.players[1].name;
+      $("#player2-name-display").textContent = state.players[2].name;
+      $("#player1-points").textContent = state.casePoints[c.id][1];
+      $("#player2-points").textContent = state.casePoints[c.id][2];
+      $("#current-player-display").textContent = `PLAYER ${state.currentPlayer}: ${state.players[state.currentPlayer].name}`;
+
+      $("#player1-card").classList.toggle("active-player", state.currentPlayer === 1);
+      $("#player2-card").classList.toggle("active-player", state.currentPlayer === 2);
+    }
+
+    function renderTeacherPanel() {
+      const c = currentCase();
+      $("#teacher-title").textContent = c.title;
+      $("#teacher-victim").textContent = c.victim;
+      $("#teacher-suspect").textContent = c.suspect;
+      $("#teacher-motive").textContent = c.motive;
+      $("#teacher-method").textContent = c.method;
+      $("#teacher-complete-answer").textContent = c.completeAnswer;
+      $("#teacher-keywords").innerHTML = c.keywords.map(k => `
+        <div class="keyword-option" style="cursor:default;">
+          <span><strong>${escapeHtml(k.word)}</strong><small>${escapeHtml(k.synonyms.join(", "))}</small></span>
+        </div>`).join("");
+    }
+
+    function renderGuessModal() {
+      $("#guess-title").textContent = `${state.players[state.currentPlayer].name} is making a guess`;
+    }
+
+    function renderKeywordCheck() {
+      const c = currentCase();
+      $("#keyword-title").textContent = `${state.players[state.currentPlayer].name} — ${c.title}`;
+      $("#keyword-check-grid").innerHTML = c.keywords.map((k, index) => `
+        <label class="keyword-option">
+          <input type="checkbox" class="keyword-check" data-keyword-index="${index}" />
+          <span><strong>${escapeHtml(k.word)}</strong><small>Accept: ${escapeHtml(k.synonyms.join(", "))}</small></span>
+        </label>`).join("");
+      $("#theory-correct-checkbox").checked = false;
+      updateKeywordCounter();
+    }
+
+    function updateKeywordCounter() {
+      const c = currentCase();
+      const count = $$(".keyword-check:checked").length;
+      const theoryCorrect = $("#theory-correct-checkbox").checked;
+      $("#keyword-count").textContent = `${count} / ${c.keywords.length}`;
+      $("#case-solved-btn").disabled = !(count >= c.minimumKeywords && theoryCorrect);
+    }
+
+    function renderSolution(winnerId = state.solvedCases[state.currentCaseId]?.winner || state.currentPlayer) {
+      const c = currentCase();
+      $("#solution-case-label").textContent = `CASE ${c.id} · ${c.title}`;
+      $("#winner-line").textContent = `${state.players[winnerId].name} solved ${c.title}.`;
+      $("#solution-story").textContent = c.completeAnswer;
+      $("#solution-keywords").innerHTML = c.keywords.map(k => `<li>${escapeHtml(k.word)}</li>`).join("");
+      $("#solution-true-clues").innerHTML = c.trueClues.map(item => `<li>${escapeHtml(item)}</li>`).join("");
+      $("#solution-red-herrings").innerHTML = c.redHerrings.map(item => `<li>${escapeHtml(item)}</li>`).join("");
+      $("#solution-player1-name").textContent = state.players[1].name;
+      $("#solution-player2-name").textContent = state.players[2].name;
+      $("#solution-player1-score").textContent = state.casePoints[c.id][1];
+      $("#solution-player2-score").textContent = state.casePoints[c.id][2];
+
+      const unsolved = CASES.find(item => !state.solvedCases[item.id]);
+      $("#next-case-btn").textContent = unsolved ? "Next Unsolved Case" : "All Cases Completed";
+    }
+
+    function selectCase(caseId) {
+      state.currentCaseId = Number(caseId);
+      state.currentPlayer = 1;
+      renderIntro();
+      showScreen("intro-screen");
+    }
+
+    function startInvestigation() {
+      renderInvestigation();
+      showScreen("investigation-screen");
+    }
+
+    function switchTurn() {
+      state.currentPlayer = state.currentPlayer === 1 ? 2 : 1;
+      renderInvestigation();
+      saveState();
+      toast(`${state.players[state.currentPlayer].name}'s turn`);
+    }
+
+    function changePoint(playerId, amount) {
+      const cId = state.currentCaseId;
+      const current = Number(state.casePoints[cId][playerId]) || 0;
+      state.casePoints[cId][playerId] = Math.max(0, current + amount);
+      renderInvestigation();
+      saveState();
+      toast(amount > 0 ? `+1 clue point for ${state.players[playerId].name}` : `Point adjusted for ${state.players[playerId].name}`);
+    }
+
+    function requireTeacher(action) {
+      if (teacherUnlocked) {
+        action();
+        return;
+      }
+      pendingTeacherAction = action;
+      $("#pin-input").value = "";
+      openModal("pin-modal");
+      setTimeout(() => $("#pin-input").focus(), 80);
+    }
+
+    function verifyPin() {
+      if ($("#pin-input").value === TEACHER_PIN) {
+        teacherUnlocked = true;
+        closeModal("pin-modal");
+        const action = pendingTeacherAction;
+        pendingTeacherAction = null;
+        if (action) action();
+        toast("Teacher mode unlocked");
+      } else {
+        $("#pin-input").value = "";
+        toast("Incorrect PIN");
+      }
+    }
+
+    function openTeacherPanel() {
+      renderTeacherPanel();
+      openModal("teacher-modal");
+    }
+
+    function openKeywordCheck() {
+      closeModal("guess-modal");
+      renderKeywordCheck();
+      openModal("keyword-modal");
+    }
+
+    function markCaseSolved(winnerId = state.currentPlayer, manualReveal = false) {
+      const cId = state.currentCaseId;
+      state.solvedCases[cId] = { winner: winnerId, revealed: Boolean(manualReveal), solvedAt: new Date().toISOString() };
+      state.players[winnerId].totalPoints = calculateTotalPoints(winnerId);
+      closeAllModals();
+      renderSolution(winnerId);
+      showScreen("solution-screen");
+    }
+
+    function calculateTotalPoints(playerId) {
+      const cluePoints = CASES.reduce((sum, c) => sum + Number(state.casePoints[c.id][playerId] || 0), 0);
+      const solvedBonus = Object.values(state.solvedCases).filter(result => result.winner === playerId && !result.revealed).length * 5;
+      return cluePoints + solvedBonus;
+    }
+
+    function resetCurrentCase() {
+      state.casePoints[state.currentCaseId] = { 1: 0, 2: 0 };
+      delete state.solvedCases[state.currentCaseId];
+      state.currentPlayer = 1;
+      renderInvestigation();
+      saveState();
+      closeAllModals();
+      toast("Current case reset");
+    }
+
+    function askConfirm(message, action) {
+      $("#confirm-message").textContent = message;
+      confirmAction = action;
+      openModal("confirm-modal");
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    // Navigation and setup
+    $("#start-btn").addEventListener("click", () => {
+      $("#player1-input").value = state.players[1].name === "Player 1" ? "" : state.players[1].name;
+      $("#player2-input").value = state.players[2].name === "Player 2" ? "" : state.players[2].name;
+      showScreen("setup-screen");
+    });
+
+    $("#continue-btn").addEventListener("click", () => {
+      const screen = state.currentScreen && document.getElementById(state.currentScreen) ? state.currentScreen : "selection-screen";
+      if (screen === "investigation-screen") renderInvestigation();
+      if (screen === "intro-screen") renderIntro();
+      if (screen === "solution-screen") renderSolution();
+      if (screen === "selection-screen") renderCaseSelection();
+      showScreen(screen, false);
+    });
+
+    $("#player-form").addEventListener("submit", event => {
+      event.preventDefault();
+      const p1 = $("#player1-input").value.trim();
+      const p2 = $("#player2-input").value.trim();
+      if (!p1 || !p2) { toast("Please enter both player names"); return; }
+      state.players[1].name = p1;
+      state.players[2].name = p2;
+      renderCaseSelection();
+      showScreen("selection-screen");
+    });
+
+    $("#case-grid").addEventListener("click", event => {
+      const button = event.target.closest("[data-select-case]");
+      if (button) selectCase(button.dataset.selectCase);
+    });
+
+    $("#begin-investigation-btn").addEventListener("click", startInvestigation);
+    $("#switch-turn-btn").addEventListener("click", switchTurn);
+
+    $("#make-guess-btn").addEventListener("click", () => {
+      renderGuessModal();
+      openModal("guess-modal");
+    });
+
+    $$("[data-point-player]").forEach(button => {
+      button.addEventListener("click", () => changePoint(Number(button.dataset.pointPlayer), Number(button.dataset.pointChange)));
+    });
+
+    $("#teacher-btn").addEventListener("click", () => requireTeacher(openTeacherPanel));
+    $("#unlock-teacher-btn").addEventListener("click", verifyPin);
+    $("#pin-input").addEventListener("keydown", event => { if (event.key === "Enter") verifyPin(); });
+
+    $("#open-keyword-check-btn").addEventListener("click", () => requireTeacher(openKeywordCheck));
+    $("#guess-incorrect-btn").addEventListener("click", () => { closeModal("guess-modal"); switchTurn(); });
+    $("#keyword-incorrect-btn").addEventListener("click", () => { closeModal("keyword-modal"); switchTurn(); });
+    $("#keyword-check-grid").addEventListener("change", updateKeywordCounter);
+    $("#theory-correct-checkbox").addEventListener("change", updateKeywordCounter);
+    $("#case-solved-btn").addEventListener("click", () => markCaseSolved(state.currentPlayer));
+
+    $("#teacher-set-p1-turn").addEventListener("click", () => { state.currentPlayer = 1; renderInvestigation(); saveState(); toast(`${state.players[1].name}'s turn`); });
+    $("#teacher-set-p2-turn").addEventListener("click", () => { state.currentPlayer = 2; renderInvestigation(); saveState(); toast(`${state.players[2].name}'s turn`); });
+    $("#teacher-reset-points").addEventListener("click", () => {
+      state.casePoints[state.currentCaseId] = { 1: 0, 2: 0 };
+      renderInvestigation();
+      saveState();
+      toast("Case points reset");
+    });
+    $("#teacher-restart-case").addEventListener("click", () => askConfirm("Restart this case and reset both players’ clue points?", resetCurrentCase));
+    $("#teacher-reveal-solution").addEventListener("click", () => askConfirm("Reveal the full solution without a player solving the case?", () => markCaseSolved(state.currentPlayer, true)));
+    $("#teacher-case-selection").addEventListener("click", () => { closeAllModals(); renderCaseSelection(); showScreen("selection-screen"); });
+
+    $("#next-case-btn").addEventListener("click", () => {
+      const unsolved = CASES.find(item => !state.solvedCases[item.id]);
+      if (unsolved) selectCase(unsolved.id);
+      else { renderCaseSelection(); showScreen("selection-screen"); toast("All three cases are complete"); }
+    });
+
+    $("#play-again-btn").addEventListener("click", () => {
+      state.casePoints[state.currentCaseId] = { 1: 0, 2: 0 };
+      delete state.solvedCases[state.currentCaseId];
+      state.currentPlayer = 1;
+      renderIntro();
+      showScreen("intro-screen");
+    });
+
+    $("#confirm-yes-btn").addEventListener("click", () => {
+      closeModal("confirm-modal");
+      const action = confirmAction;
+      confirmAction = null;
+      if (action) action();
+    });
+
+    // Generic UI handlers
+    document.addEventListener("click", event => {
+      const openButton = event.target.closest("[data-open-modal]");
+      if (openButton) openModal(openButton.dataset.openModal);
+
+      const closeButton = event.target.closest("[data-close-modal]");
+      if (closeButton) closeModal(closeButton.closest(".modal-backdrop"));
+
+      if (event.target.matches(".modal-backdrop")) closeModal(event.target);
+
+      if (event.target.closest("[data-go-home]")) showScreen("home-screen");
+      if (event.target.closest("[data-show-selection]")) { renderCaseSelection(); showScreen("selection-screen"); }
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") {
+        const openModals = $$(".modal-backdrop.open");
+        if (openModals.length) closeModal(openModals[openModals.length - 1]);
+      }
+    });
+
+    // First load
+    loadState();
+    updateContinueButton();
+    renderCaseSelection();
+    showScreen("home-screen", false);
+  </script>
+</body>
+</html>
