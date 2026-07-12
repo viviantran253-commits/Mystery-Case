@@ -260,8 +260,8 @@
       height: calc(100vh - 36px);
       width: 100%;
       display: grid;
-      grid-template-rows: auto minmax(0, 1fr) auto;
-      gap: 12px;
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      gap: 8px;
       min-height: 640px;
     }
 
@@ -281,6 +281,21 @@
     .investigation-header .center strong { display: block; font-size: clamp(1rem, 2.3vw, 1.55rem); }
     .investigation-header .center span { color: var(--muted); font-size: 0.85rem; }
     .investigation-header .right { display: flex; justify-content: flex-end; }
+
+    .investigation-intro {
+      padding: 6px 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(9, 15, 28, 0.82);
+      color: var(--muted);
+      font-size: clamp(0.72rem, 1vw, 0.84rem);
+      line-height: 1.35;
+      text-align: center;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
+    }
 
     .case-stage {
       min-height: 0;
@@ -315,7 +330,7 @@
 
     .player-card, .turn-card {
       min-width: 0;
-      padding: 14px 18px;
+      padding: 10px 16px;
       text-align: center;
       position: relative;
     }
@@ -573,7 +588,7 @@
     @media (max-width: 760px) {
       .app { padding: 10px; }
       .screen { min-height: calc(100vh - 20px); }
-      .investigation-shell { height: auto; min-height: calc(100vh - 20px); grid-template-rows: auto minmax(330px, 62vh) auto; }
+      .investigation-shell { height: auto; min-height: calc(100vh - 20px); grid-template-rows: auto auto minmax(330px, 62vh) auto; }
       .investigation-header { grid-template-columns: 1fr auto; }
       .investigation-header .left { display: none; }
       .investigation-header .center { text-align: left; }
@@ -688,6 +703,8 @@
             <button class="btn btn-ghost btn-small" id="teacher-btn">Teacher</button>
           </div>
         </header>
+
+        <div class="investigation-intro" id="investigation-intro"></div>
 
         <div class="case-stage">
           <img id="case-image" alt="Mystery case scene" />
@@ -894,7 +911,8 @@
     const CASES = [
       {
         id: 1,
-        title: "The Poisoned Stamp",
+        title: "Case 1",
+        investigationIntro: "A man was found dead at his desk in his home office at night. There were no wounds or signs of a fight.",
         image: "assets/case-1-poisoned-stamp.png",
         fallbackImage: "https://drive.google.com/thumbnail?id=1OVJ0uYmJg23XwiRSuxkQ9iD8pKf3VD0s&sz=w2400",
         cardSummary: "A businessman dies at his desk while preparing a letter.",
@@ -920,7 +938,8 @@
       },
       {
         id: 2,
-        title: "The Broken Balcony Rail",
+        title: "Case 2",
+        investigationIntro: "Mr. Henry, a small hotel owner, was found dead on the grass below a third-floor balcony. Police first suspected an accidental fall.",
         image: "assets/case-2-broken-balcony.png",
         fallbackImage: "https://drive.google.com/thumbnail?id=1eBGZS73JOzF9e_8xU2HUz2_eH-uSX_kq&sz=w2400",
         cardSummary: "A hotel owner falls from a damaged third-floor balcony.",
@@ -946,7 +965,8 @@
       },
       {
         id: 3,
-        title: "The Empty Inhaler",
+        title: "Case 3",
+        investigationIntro: "Lily, a stage actress, was found unconscious in her dressing room after the final rehearsal. Her asthma inhaler was lying beside her.",
         image: "assets/case-3-empty-inhaler.jpg",
         fallbackImage: "https://drive.google.com/thumbnail?id=1b5Bo4jAwtj0AObHL5hTmsld7E_OS5Ch1&sz=w2400",
         cardSummary: "A leading actress collapses after the final rehearsal.",
@@ -1072,7 +1092,6 @@
             <img class="case-card-image" src="${caseData.image}" data-fallback="${caseData.fallbackImage}" alt="${escapeHtml(caseData.title)}" />
             <div class="case-card-content">
               <div class="case-number">CASE ${caseData.id}</div>
-              <h3>${escapeHtml(caseData.title)}</h3>
               <p>${escapeHtml(caseData.cardSummary)}</p>
               <div class="case-status">${status}</div>
               <button class="btn btn-primary" data-select-case="${caseData.id}">${solved ? "Play Again" : "Play Case"}</button>
@@ -1093,7 +1112,7 @@
       const c = currentCase();
       $("#intro-case-label").textContent = `Case ${c.id}`;
       $("#intro-case-number").textContent = `Case ${c.id}`;
-      $("#intro-title").textContent = c.title;
+      $("#intro-title").textContent = "Case Background";
       $("#intro-background").textContent = c.publicBackground;
       setImage($("#intro-image"), c);
     }
@@ -1102,6 +1121,7 @@
       const c = currentCase();
       $("#investigation-title").textContent = c.title;
       $("#investigation-case-count").textContent = `CASE ${c.id} OF ${CASES.length}`;
+      $("#investigation-intro").textContent = c.investigationIntro;
       setImage($("#case-image"), c);
 
       $("#player1-name-display").textContent = state.players[1].name;
@@ -1154,7 +1174,7 @@
 
     function renderSolution(winnerId = state.solvedCases[state.currentCaseId]?.winner || state.currentPlayer) {
       const c = currentCase();
-      $("#solution-case-label").textContent = `CASE ${c.id} · ${c.title}`;
+      $("#solution-case-label").textContent = `CASE ${c.id}`;
       $("#winner-line").textContent = `${state.players[winnerId].name} solved ${c.title}.`;
       $("#solution-story").textContent = c.completeAnswer;
       $("#solution-keywords").innerHTML = c.keywords.map(k => `<li>${escapeHtml(k.word)}</li>`).join("");
